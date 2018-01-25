@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--css-->
+<link href="style.css" type="text/css" rel="stylesheet">
+
+<title>Muh_proje</title>
+
+<script src="https://www.gstatic.com/firebasejs/4.8.2/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyAcctafqw9fu1FQJ0yGszOBbOIder_ZktU",
+    authDomain: "muh-proje.firebaseapp.com",
+    databaseURL: "https://muh-proje.firebaseio.com",
+    projectId: "muh-proje",
+    storageBucket: "muh-proje.appspot.com",
+    messagingSenderId: "802470614636"
+  };
+  firebase.initializeApp(config);
+	
+var admin = require('firebase-admin');
+
+var serviceAccount = require('path/to/serviceAccountKey.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: 'https://<DATABASE_NAME>.firebaseio.com'
+});
+</script>
+</head>
+
+<body>
+
+	<section class="container">
+	<div class="left-half">
+	<article>
+	<table>
+		<tr>
+			<td>Tag: </td>
+			<td><input type="text" name = "note_tag" id= "note_tag" /></td>
+
+		</tr>
+	
+	
+		<tr>
+			<td>Konu: </td>
+			<td><input type="text" name = "konu" id= "konu" /></td>
+		</tr>
+		
+		<table>
+			<td>Açıklama: </td>
+			<table>
+			<textarea type = "text" rows="4" cols="50" name="aciklama" id="aciklama" onClick="Clear();" >Notunuzu buraya giriniz..</textarea>
+		</table>
+		
+		</table>
+		
+		<tr>
+			<td>Tarih: </td>
+			<td><input type="date" id="tarih" value="2018-01-01" name ="tarih" /></td>
+			
+		</tr>
+		
+		<tr>
+			<td colspan="2">
+				<input type="button" value="Save" onclick="save_note();"/>
+				<input type="button" value="Update" onclick="update_note();" />
+			</td>
+		</tr>
+		
+		
+	</table>
+
+	
+	</article>
+	</div>
+
+	<div class="right-half">
+	
+	<article>
+	<table>
+	
+		<tr>
+			<td>Tag: </td>
+			<td><input type="text" name = "delete_tag" id= "delete_tag" /></td>
+			
+			<td colspan="4">
+				<input type="button" value="Delete" onclick="delete_note();" />
+			</td>
+		</tr>
+
+	</table>
+	<h1>Note_List</h1>
+		<table id = "tbl_note_list">
+			<tr>
+				<td >TAG</td>
+				<td >KONU</td>
+				<td >ACIKLAMA</td>
+				<td>TARIH</td>
+			</tr>
+		</table>
+		</article>
+		</div>
+		
+	</section>
+	<script language="javascript">
+		
+		var tblNote = document.getElementById('tbl_note_list');
+        var databaseRef = firebase.database().ref('note/');
+        var rowindex = 1;
+
+
+        databaseRef.once('value', function(snapshot) {
+            snapshot.forEach(function(childSnapshot) {
+
+                var childKey = childSnapshot.key;
+				var childData = childSnapshot.val();
+                var childData1 = childSnapshot.val();
+				var childData2 = childSnapshot.val();
+
+                var row = tblNote.insertRow(rowindex);
+                var cellId = row.insertCell(0);
+				var cellKonu = row.insertCell(1);
+                var cellAciklama = row.insertCell(2);
+				var cellTarih = row.insertCell(3);
+                cellId.appendChild(document.createTextNode(childKey));
+				cellKonu.appendChild(document.createTextNode(childData.konu));
+                cellAciklama.appendChild(document.createTextNode(childData1.aciklama));
+				cellTarih.appendChild(document.createTextNode(childData2.tarih));
+				
+                rowindex = rowindex + 1;
+
+            });
+        });
+		
+		function save_note() {
+			var tag = document.getElementById('note_tag').value;
+			var sub = document.getElementById('konu').value;
+            var aciklama = document.getElementById('aciklama').value;
+			var tarih = document.getElementById('tarih').value;
+			
+			if (tag==null || tag=="",sub==null || sub=="",aciklama==null || aciklama==""){
+            alert("Lütfen bütün boşlukları doldurunuz...");
+            return false;
+        }
+			
+				var data = {
+				tag : tag,
+    			konu : sub,
+				aciklama : aciklama,
+				tarih : tarih
+  			
+				};
+		
+
+            var updates = {};
+            updates['/note/' + tag ] = data;
+            firebase.database().ref().update(updates);
+			
+            alert('Not başarıyla oluşturuldu');
+            reload_page();
+			
+		}
+		
+		function update_note(){
+			var tag = document.getElementById('note_tag').value;
+			var sub = document.getElementById('konu').value;
+            var aciklama = document.getElementById('aciklama').value;
+			var tarih = document.getElementById('tarih').value;
+			
+            var data = {
+				tag : tag,
+                konu : sub,
+				aciklama: aciklama,
+				tarih:tarih
+            }
+			
+			if (tag==null || tag=="",sub==null || sub=="",aciklama==null || aciklama==""){
+            alert("Güncellemek istediğiniz notun 'tag'ini ve değiştirmek istediğiniz bilgileri yazınız...");
+            return false;
+			}
+			
+            var updates = {};
+
+			updates['/note/'+ tag] = data;
+			
+           
+            firebase.database().ref().update(updates);
+			
+            alert('Not başarıyla güncellendi');
+
+            reload_page();
+			
+		}
+		
+		
+		function delete_note(){
+			var d_tag = document.getElementById('delete_tag').value;
+
+			if (d_tag==null || d_tag==""){
+            alert("Silmek istediğiniz notun 'tag' ini yazınız...");
+            return false;
+        }
+            firebase.database().ref().child('/note/' + d_tag).remove();
+
+            alert('Not başarıyla silindi');
+
+            reload_page();
+			
+		}
+		
+		function Clear(){
+			if(document.getElementById('aciklama').value=="Notunuzu buraya giriniz.."){
+					document.getElementById('aciklama').value="";
+				}
+			else
+				return false;
+		}
+		
+		function reload_page(){
+			 window.location.reload();
+			
+		}
+	</script>
+	
+</body>
+</html>
